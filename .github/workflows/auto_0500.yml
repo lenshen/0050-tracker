@@ -1,1 +1,45 @@
+name: Auto Fetch 0050 Price
 
+on:
+  schedule:
+    # 台灣時間週一至週五下午 14:30 執行 (14:30 TST = 06:30 UTC)
+    - cron: '30 6 * * 1-5'
+  workflow_dispatch: # 允許手動點擊觸發測試
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 重要：必須允許 Actions 把更新後的 Excel 推回你的儲存庫
+
+    steps:
+    - name: 檢查儲存庫代碼
+      uses: actions/checkout@v4
+
+    - name: 設定 Python 環境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 安裝相依套件
+      run: |
+        python -m pip install --upgrade pip
+        pip install yfinance pandas openpyxl requests
+
+    - name: 執行 Python 腳本
+      env:
+        LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+        LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
+      run: python get_0050.py
+
+    - name: 提交並推送 Excel 更新
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        
+        # 檢查是否有檔案變更
+        if [ -f "0050_history.xlsx" ]; then
+          git add 0050_history.xlsx
+          # 只有在真正有變更時才 commit，避免空 commit 報錯
+          git diff --quiet && git diff --staged --quiet || (git commit -m "📊 自動更新 0050 歷史紀錄" && git push)
+        fi
