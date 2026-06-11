@@ -23,9 +23,12 @@ jobs:
       - name: 安裝相關套件
         run: |
           python -m pip install --upgrade pip
-          pip install requests yfinance pandas openpyxl
+          pip install requests yfinance pandas openpyxl line-bot-sdk
 
       - name: 執行 Python 腳本
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: python get_0050.py
 
       - name: 自動將更新後的 Excel 檔案存回儲存庫
