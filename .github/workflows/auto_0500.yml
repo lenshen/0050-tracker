@@ -10,7 +10,7 @@ jobs:
   run-bot:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # 重要：必須允許 Actions 把更新後的 Excel 推回你的儲存庫
+      contents: write
 
     steps:
     - name: 檢查儲存庫代碼
