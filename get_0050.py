@@ -11,10 +11,13 @@ def get_0050_price():
     # 抓取 0050 價格
     stock = yf.Ticker("0050.TW")
     df = stock.history(period="1d")
+    
     if df.empty:
         raise Exception("無法抓取 0050 價格資料")
-    price = round(df['Close'].iloc[0], 2)
-    date_str = datetime.now().strftime('%Y-%m-%d')
+        
+    # 確保抓取最後一筆交易日的日期與收盤價
+    price = round(float(df['Close'].iloc[-1]), 2)
+    date_str = df.index[-1].strftime('%Y-%m-%d')
     return date_str, price
 
 def update_excel(date_str, price):
@@ -39,15 +42,24 @@ def update_excel(date_str, price):
     print(f"📝 Excel 檔案已更新: {date_str} -> {price} 元")
 
 def send_line_message(date_str, price):
-    # 廣播只需要 Token，不需要個人的 User ID
+    # 廣播只需要 Token，不需個人 ID，且金鑰安全鎖在 Secrets 中
     token = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
     
     if not token:
         print("⚠️ 未設定 LINE Token，跳過發送訊息。")
         return
 
-    # LINE 訊息與文字內容
-    message_text = f"📊 0050 每日價格更新\n📅 日期: {date_str}\n💰 收盤價: {price} 元\n\n最新 Excel 歷史紀錄已自動同步至 GitHub！"
+    # 專屬於你的 Excel 直連下載網址 (使用 /raw/ 確保點擊後直接下載，不顯示 GitHub 網頁)
+    excel_url = "https://github.com/lenshen/0050-tracker/raw/main/0050_history.xlsx"
+
+    # LINE 訊息與文字內容，排版設計適合客戶閱讀
+    message_text = (
+        f"📊 【0050 每日收盤回報】\n"
+        f"📅 日期: {date_str}\n"
+        f"💰 收盤價: {price} 元\n\n"
+        f"📂 最新歷史報表已同步，點擊下方連結直接下載：\n"
+        f"{excel_url}"
+    )
     
     # 這是 LINE Messaging API「廣播」的正確專屬網址
     url = 'https://api.line.me/v2/bot/message/broadcast'
@@ -56,7 +68,6 @@ def send_line_message(date_str, price):
         'Authorization': f'Bearer {token}'
     }
     
-    # 廣播的 payload 不需要 'to'，系統會自動發給所有加機器人好友的人
     payload = {
         "messages": [
             {
