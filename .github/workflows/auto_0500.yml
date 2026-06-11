@@ -30,3 +30,11 @@ jobs:
           LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
           LINE_USER_ID: ${{ secrets.LINE_USER_ID }}
         run: python get_0050.py
+
+      - name: 自動將更新後的 Excel 檔案存回儲存庫
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add *.xlsx || true
+          git commit -m "自動更新 Excel 價格紀錄 [skip ci]" || true
+          git push
