@@ -39,28 +39,25 @@ def update_excel(date_str, price):
     print(f"📝 Excel 檔案已更新: {date_str} -> {price} 元")
 
 def send_line_message(date_str, price):
+    # 廣播只需要 Token，不需要個人的 User ID
     token = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
-    user_id = os.environ.get('LINE_USER_ID')
     
-    if not token or not user_id:
-        print("⚠️ 未設定 LINE Token 或 User ID，跳過發送訊息。")
+    if not token:
+        print("⚠️ 未設定 LINE Token，跳過發送訊息。")
         return
 
     # LINE 訊息與文字內容
-    message_text = f"📊 0050 每日價格更新\n日期: {date_str}\n收盤價: {price} 元\n\n最新 Excel 紀錄已附在下方！"
+    message_text = f"📊 0050 每日價格更新\n📅 日期: {date_str}\n💰 收盤價: {price} 元\n\n最新 Excel 歷史紀錄已自動同步至 GitHub！"
     
-    url = 'https://line.me'
+    # 這是 LINE Messaging API「廣播」的正確專屬網址
+    url = 'https://api.line.me/v2/bot/message/broadcast'
     headers = {
+        'Content-Type': 'application/json',
         'Authorization': f'Bearer {token}'
     }
     
-    # 這裡改成同時發送文字與 Excel 檔案（使用 LINE Messaging API 規格）
-    # 注意：LINE 原生 PUSH 檔案需透過特殊的 media 接口，或改用 LINE Notify
-    # 為了讓您最方便直接收到檔案，我們在有 Excel 檔案時改用 LINE Notify API 或直接透過 python request 傳送
-    # 如果您使用的是 LINE Bot 官方帳號，以下為發送文字與 Excel 檔案的標準作法：
-    
+    # 廣播的 payload 不需要 'to'，系統會自動發給所有加機器人好友的人
     payload = {
-        "to": user_id,
         "messages": [
             {
                 "type": "text",
@@ -69,32 +66,14 @@ def send_line_message(date_str, price):
         ]
     }
     
-    response = requests.post(url, headers=headers, json=payload)
-    if response.status_code == 200:
-        print("🚀 LINE 文字訊息發送成功！")
-    else:
-        print(f"❌ LINE 發送失敗，狀態碼: {response.status_code}，回應: {response.text}")
-
-    # 傳送 Excel 檔案部分
-    if os.path.exists(file_name):
-        # 由於 LINE 官方帳號 (Messaging API) 傳送檔案（file 類型）需要將檔案傳到公開網址上給 LINE 抓，
-        # 如果您的 LINE 憑證其實是「LINE Notify」，我們可以直接用以下代碼直接上傳檔案：
-        notify_url = 'https://line.me'
-        notify_headers = {'Authorization': f'Bearer {token}'}
-        
-        try:
-            with open(file_name, 'rb') as f:
-                files = {'imageFile' if file_name.endswith(('.jpg', '.png')) else 'file': (file_name, f, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')}
-                # 如果您的 Token 其實是 LINE Notify，這行會成功：
-                r = requests.post(notify_url, headers=notify_headers, data={'message': '附上最新 Excel 檔案'}, files=files)
-                if r.status_code == 200:
-                    print("📁 Excel 檔案已成功透過 LINE 發送！")
-                    return
-        except:
-            pass
-            
-        print("💡 提示：如果檔案沒有成功傳到 LINE，代表您的 Token 是官方帳號機器人。")
-        print("您可以搭配剛才改好的 auto_0500.yml，直接在 GitHub 主畫面點選下載 Excel，也是一個很方便的辦法喔！")
+    try:
+        response = requests.post(url, headers=headers, json=payload)
+        if response.status_code == 200:
+            print("🚀 LINE 廣播訊息發送成功！")
+        else:
+            print(f"❌ LINE 發送失敗，狀態碼: {response.status_code}，回應: {response.text}")
+    except Exception as e:
+        print(f"❌ 發送 LINE 訊息時發生錯誤: {e}")
 
 if __name__ == "__main__":
     try:
