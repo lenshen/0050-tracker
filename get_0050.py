@@ -19,8 +19,8 @@ TARGET_STOCKS = {
     "凱基TOP50(009816)": "009816.TW"
 }
 
-file_name = 'stocks_history.xlsx'
-GITHUB_USERNAME = 'lenshen'  # 你的 GitHub 帳號
+# 🔒 統一設定檔名（確保與你的 GitHub 倉庫檔案完全一致）
+file_name = '0050_history.xlsx'
 
 def get_stock_prices():
     results = []
@@ -114,7 +114,7 @@ def update_excel(results):
         df_today.to_excel(writer, sheet_name="今日總覽", index=False)
         df_history_all.to_excel(writer, sheet_name="歷史紀錄", index=False)
         
-    print(f"📝 Excel 檔案多分頁更新完成！(已寫入 今日總覽 與 歷史紀錄)")
+    print(f"📝 Excel 檔案分頁更新完成！檔名：{file_name}")
 
 def send_line_message(date_str, results):
     token = os.environ.get('LINE_CHANNEL_ACCESS_TOKEN')
@@ -122,13 +122,13 @@ def send_line_message(date_str, results):
         print("⚠️ 未設定 LINE Token，跳過發送訊息。")
         return
 
-    excel_url = f"https://github.com/{GITHUB_USERNAME}/0050-tracker/raw/main/{file_name}"
+    # 🎯 精準對齊你的真實儲存庫下載連結，將 /blob/ 改為 /raw/ 確保客戶能一鍵直接下載檔案
+    excel_url = "https://github.com/lenshen/0050-tracker/raw/main/0050_history.xlsx"
     
-    # 組合給客戶的進階文字訊息版面 (著重在收盤價與今日漲跌幅)
+    # 組合給客戶的進階文字訊息版面
     message_lines = [f"📊 【每日台股收盤與精選指標】", f"📅 日期: {date_str}", ""]
     
     for item in results:
-        # 根據漲跌數值給予視覺符號
         change_val = float(item['漲跌價'])
         if change_val > 0:
             status_sign = f"▲ +{item['漲跌價']} ({item['漲跌幅']})"
@@ -140,7 +140,7 @@ def send_line_message(date_str, results):
         message_lines.append(f"🔹 {item['股票名稱']}")
         message_lines.append(f"  收盤價: {item['收盤價']} 元 ({status_sign})")
         message_lines.append(f"  殖利率: {item['殖利率']} | 本益比: {item['本益比']}")
-        message_lines.append("") # 空行分隔
+        message_lines.append("") 
         
     message_lines.append(f"📂 點擊下載完整 Excel 歷史報表 (內含今日總覽與歷史紀錄分頁)：")
     message_lines.append(excel_url)
