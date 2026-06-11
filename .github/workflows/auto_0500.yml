@@ -2,9 +2,8 @@ name: Auto Fetch 0050 Price
 
 on:
   schedule:
-    # 台灣時間週一至週五下午 14:30 執行 (14:30 TST = 06:30 UTC)
     - cron: '30 6 * * 1-5'
-  workflow_dispatch: # 允許手動點擊觸發測試
+  workflow_dispatch:
 
 jobs:
   run-bot:
@@ -37,9 +36,7 @@ jobs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         
-        # 檢查是否有檔案變更
         if [ -f "0050_history.xlsx" ]; then
           git add 0050_history.xlsx
-          # 只有在真正有變更時才 commit，避免空 commit 報錯
-          git diff --quiet && git diff --staged --quiet || (git commit -m "📊 自動更新 0050 歷史紀錄" && git push)
+          git diff --quiet && git diff --staged --quiet || (git commit -m "自動更新 0050 歷史紀錄" && git push)
         fi
